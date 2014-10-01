@@ -45,26 +45,34 @@ timesNatural !a@(Natural !n1 !arr1) !b@(Natural !n2 !arr2)
         | otherwise = outerLoop2 nx marr carryhi carrylo
 
     innerLoop1xi !xi !yi !carryhi !carrylo !sum
-        | xi >= 0 = do
-            x <- indexWordArrayM arr1 xi
-            y <- indexWordArrayM arr2 yi
-            let (# !cry0, !prod #) = timesWord2 x y
-                (# !cry1, !sum1 #) = plusWord2 prod sum
-                (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
-                !cryhi = plusWord carryhi tcryhi
-            innerLoop1xi (xi - 1) (yi + 1) cryhi crylo sum1
-        | otherwise = return $! (carryhi, carrylo, sum)
+     = StrictPrim $ \s ->
+        if   xi >= 0
+        then let StrictPrim x' = indexWordArrayM arr1 xi
+                 (# s',  x #)  = x' s
+                 StrictPrim y' = indexWordArrayM arr2 yi
+                 (# s'', y #)  = y' s'
+                 (# !cry0, !prod #) = timesWord2 x y
+                 (# !cry1, !sum1 #) = plusWord2 prod sum
+                 (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
+                 !cryhi = plusWord carryhi tcryhi
+                 StrictPrim r' = innerLoop1xi (xi - 1) (yi + 1) cryhi crylo sum1
+             in r' s''
+        else (# s, (carryhi, carrylo, sum) #)
 
     innerLoop1yi !xi !yi !carryhi !carrylo !sum
-        | yi < n2 = do
-            x <- indexWordArrayM arr1 xi
-            y <- indexWordArrayM arr2 yi
-            let (# !cry0, !prod #) = timesWord2 x y
-                (# !cry1, !sum1 #) = plusWord2 prod sum
-                (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
-                !cryhi = plusWord carryhi tcryhi
-            innerLoop1yi (xi - 1) (yi + 1) cryhi crylo sum1
-        | otherwise = return $! (carryhi, carrylo, sum)
+     = StrictPrim $ \s ->
+        if   yi < n2
+        then let StrictPrim x' = indexWordArrayM arr1 xi
+                 (# s',   x #) = x' s
+                 StrictPrim y' = indexWordArrayM arr2 yi
+                 (# s'',  y #) = y' s'
+                 (# !cry0, !prod #) = timesWord2 x y
+                 (# !cry1, !sum1 #) = plusWord2 prod sum
+                 (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
+                 !cryhi = plusWord carryhi tcryhi
+                 StrictPrim r' = innerLoop1yi (xi - 1) (yi + 1) cryhi crylo sum1
+             in r' s''
+        else (# s, (carryhi, carrylo, sum) #)
 
     outerLoop2 !nx !marr !carryhi !carrylo
         | nx < n1 + n2 - 1 = do
@@ -77,12 +85,17 @@ timesNatural !a@(Natural !n1 !arr1) !b@(Natural !n2 !arr2)
         | otherwise = return $! nx
 
     innerLoop2 !xi !yi !carryhi !carrylo !sum
-        | yi < n2 = do
-            x <- indexWordArrayM arr1 xi
-            y <- indexWordArrayM arr2 yi
-            let (# !cry0, !prod #) = timesWord2 x y
-                (# !cry1, !sum1 #) = plusWord2 prod sum
-                (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
-                !cryhi = plusWord carryhi tcryhi
-            innerLoop2 (xi - 1) (yi + 1) cryhi crylo sum1
-        | otherwise = do return $! (carryhi, carrylo, sum)
+     = StrictPrim $ \s ->
+        if yi < n2
+        then let StrictPrim x' = indexWordArrayM arr1 xi
+                 (# s', x #)  = x' s
+                 StrictPrim y' = indexWordArrayM arr2 yi
+                 (# s'', y #) = y' s'
+                 (# !cry0, !prod #) = timesWord2 x y
+                 (# !cry1, !sum1 #) = plusWord2 prod sum
+                 (# !tcryhi, !crylo #) = plusWord2C carrylo cry0 cry1
+                 !cryhi = plusWord carryhi tcryhi
+                 StrictPrim r' = innerLoop2 (xi - 1) (yi + 1) cryhi crylo sum1
+             in r' s''
+        else (# s, (carryhi, carrylo, sum) #)
+

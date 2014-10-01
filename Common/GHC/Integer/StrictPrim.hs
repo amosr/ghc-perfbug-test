@@ -14,7 +14,7 @@ State monad from Base to get StrictPrim.
     TypeFamilies, UnboxedTuples #-}
 
 module Common.GHC.Integer.StrictPrim
-    ( StrictPrim
+    ( StrictPrim(..)
     , runStrictPrim
     ) where
 
